@@ -1,0 +1,45 @@
+import sqlite3
+import hashlib
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+DB = '/data/data/com.termux/files/home/ezbug/database.db'
+
+def get_db():
+    return sqlite3.connect(DB)
+
+def hash_password(p):
+    return hashlib.sha256(p.encode()).hexdigest()
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, role FROM users WHERE username=? AND password=?",
+        (username, hash_password(password)))
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        return jsonify({'status': 'success', 'username': user[0], 'role': user[1]})
+    return jsonify({'status': 'error', 'message': 'Username atau password salah!'})
+
+@app.route('/statistik')
+def statistik():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users")
+    total = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM users WHERE expired IS NULL")
+    aktif = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM users WHERE expired IS NOT NULL AND expired < datetime('now')")
+    expired = cursor.fetchone()[0]
+    conn.close()
+    return jsonify({'total_user': total, 'user_aktif': aktif, 'user_expired': expired, 'pendapatan': 0})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=False)
