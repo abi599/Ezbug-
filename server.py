@@ -6,7 +6,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
-DB = '/data/data/com.termux/files/home/ezbug/database.db'
+DB = os.path.join(os.path.dirname(__file__), 'database.db')
 
 def get_db():
     return sqlite3.connect(DB)
@@ -32,7 +32,7 @@ def init_db():
     # Buat akun owner default
     try:
         cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            ('owner', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'owner'))
+            ('owner', '43a0d17178a9d26c9e0fe9a74b0b45e38d32f27aed887a008a54bf6e033bf7b9', 'owner'))
     except:
         pass
     conn.commit()
