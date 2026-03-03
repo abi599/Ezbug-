@@ -1,12 +1,14 @@
 import sqlite3
 import hashlib
-from flask import Flask, request, jsonify, send_from_directory
 import os
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 DB = os.path.join(os.path.dirname(__file__), 'database.db')
+EZBUG_DIR = os.path.dirname(__file__)
+ALLOWED_FILES = ['bot1.py', 'bot2.py', 'server.py', 'web/index.html']
 
 def get_db():
     return sqlite3.connect(DB)
@@ -29,17 +31,17 @@ def init_db():
         expired TEXT,
         invoice TEXT
     )''')
-    # Buat akun owner default
-    try:
-        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            ('owner', '43a0d17178a9d26c9e0fe9a74b0b45e38d32f27aed887a008a54bf6e033bf7b9', 'owner'))
-    except:
-        pass
-        cursor.execute('''CREATE TABLE IF NOT EXISTS sessions (
+    cursor.execute('''CREATE TABLE IF NOT EXISTS sessions (
         username TEXT PRIMARY KEY,
         device_id TEXT,
         last_login TEXT
     )''')
+    try:
+        pw = hashlib.sha256('owner123'.encode()).hexdigest()
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            ('owner', pw, 'owner'))
+    except:
+        pass
     conn.commit()
     conn.close()
 
@@ -91,12 +93,6 @@ def statistik():
     conn.close()
     return jsonify({'total_user': total, 'user_aktif': aktif, 'user_expired': expired, 'pendapatan': 0})
 
-import os
-import subprocess
-
-EZBUG_DIR = os.path.dirname(__file__)
-ALLOWED_FILES = ['bot1.py', 'bot2.py', 'server.py', 'web/index.html']
-
 @app.route('/panel/log')
 def panel_log():
     try:
@@ -139,13 +135,11 @@ def panel_start():
 
 @app.route('/panel/restart', methods=['POST'])
 def panel_restart():
-    return jsonify({'message': 'Restart tidak tersedia di Railway. Push ke GitHub untuk update!'})
+    return jsonify({'message': 'Restart tidak tersedia di Railway!'})
 
 @app.route('/panel/stop', methods=['POST'])
 def panel_stop():
     return jsonify({'message': 'Stop tidak tersedia di Railway!'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=False)
-
-
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)), debug=False)
