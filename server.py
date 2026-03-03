@@ -69,7 +69,7 @@ def login():
         cursor2 = conn2.cursor()
         cursor2.execute("SELECT device_id FROM sessions WHERE username=?", (user[0],))
         existing = cursor2.fetchone()
-        if existing and existing[0] != device_id:
+        if existing and existing[0] != device_id and user[1] != 'owner':
             conn2.close()
             return jsonify({'status': 'error', 'message': 'Akun ini sudah dipakai di perangkat lain!'})
         cursor2.execute("INSERT OR REPLACE INTO sessions VALUES (?, ?, datetime('now'))", (user[0], device_id))
