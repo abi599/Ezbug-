@@ -11,6 +11,35 @@ DB = '/data/data/com.termux/files/home/ezbug/database.db'
 def get_db():
     return sqlite3.connect(DB)
 
+def init_db():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT DEFAULT 'user',
+        expired TEXT
+    )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS pending_orders (
+        buyer_id INTEGER,
+        msg_id INTEGER,
+        username TEXT,
+        password TEXT,
+        expired TEXT,
+        invoice TEXT
+    )''')
+    # Buat akun owner default
+    try:
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            ('owner', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'owner'))
+    except:
+        pass
+    conn.commit()
+    conn.close()
+
+init_db()
+
 def hash_password(p):
     return hashlib.sha256(p.encode()).hexdigest()
 
