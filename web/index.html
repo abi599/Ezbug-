@@ -91,6 +91,8 @@ body{background:#1a0030;font-family:Arial,sans-serif;color:white;min-height:100v
 <div class="menu-item" onclick="showPage('infoPage')"><div class="icon">ℹ️</div><p>Info App</p></div>
 <div class="menu-item" onclick="showPage('apkPage')"><div class="icon">📱</div><p>Web to APK</p></div>
 </div>
+<div class="menu-item" onclick="showPage('panelPage')"><div class="icon">🖥️</div><p>Panel Bot</p></div>
+</div>
 <div class="logout-wrap">
 <button class="btn-logout" onclick="logout()">🚪 Logout</button>
 </div>
@@ -161,7 +163,7 @@ body{background:#1a0030;font-family:Arial,sans-serif;color:white;min-height:100v
 <p id="urlDisplay" style="font-size:13px;word-break:break-all;color:white"></p>
 </div>
 <button onclick="window.open('https://ai2.appinventor.mit.edu','_blank')" class="btn-login" style="margin-top:10px">🚀 Buka MIT App Inventor</button>
-<button onclick="showPage('panduanPage')" style="width:100%;padding:12px;background:transparent;color:#9b30ff;border:2px solid #9b30ff;border-radius:12px;font-size:14px;cursor:pointer;margin-top:8px">📖 Panduan Lengkap</button>
+<button onclick="showPage('panduanPage', 'panelPage', 'editorPage')" style="width:100%;padding:12px;background:transparent;color:#9b30ff;border:2px solid #9b30ff;border-radius:12px;font-size:14px;cursor:pointer;margin-top:8px">📖 Panduan Lengkap</button>
 </div>
 </div>
 </div>
@@ -176,6 +178,47 @@ body{background:#1a0030;font-family:Arial,sans-serif;color:white;min-height:100v
 <div class="card"><label>Step 5</label><p>Klik WebViewer → Width & Height: Fill parent → HomeUrl: paste URL kamu</p></div>
 <div class="card"><label>Step 6</label><p>Menu Build → Android App (.apk) → tunggu proses</p></div>
 <div class="card"><label>Step 7</label><p>Download APK → install di HP → selesai! ✅</p></div>
+</div>
+
+
+<div class="content-page" id="panelPage">
+<button class="back-btn" onclick="showPage('homePage')">← Kembali</button>
+<h2>🖥️ Panel Bot</h2>
+
+<div style="display:flex;gap:10px;margin-bottom:15px">
+    <button onclick="botAction('start')" style="flex:1;padding:12px;background:#4caf50;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">▶ Start</button>
+    <button onclick="botAction('restart')" style="flex:1;padding:12px;background:#ff9800;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">↺ Restart</button>
+    <button onclick="botAction('stop')" style="flex:1;padding:12px;background:#f44336;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer">■ Stop</button>
+</div>
+
+<div class="card">
+    <label>📊 Status</label>
+    <p id="botStatus" style="color:#4caf50">● Online</p>
+</div>
+
+<div class="card">
+    <label>📋 Console Log</label>
+    <div id="consoleLog" style="background:#000;color:#0f0;padding:10px;border-radius:8px;height:200px;overflow-y:auto;font-size:12px;font-family:monospace;margin-top:8px">
+        Memuat log...
+    </div>
+    <button onclick="loadLog()" style="width:100%;padding:8px;background:transparent;color:#9b30ff;border:1px solid #9b30ff;border-radius:8px;margin-top:8px;cursor:pointer">🔄 Refresh Log</button>
+</div>
+
+<div class="card">
+    <label>📁 Files</label>
+    <div id="fileList" style="margin-top:8px"></div>
+</div>
+
+<div class="content-page" id="editorPage" style="display:none;padding:0">
+    <div style="padding:15px">
+    <button class="back-btn" onclick="showPage('panelPage');loadFiles()">← Kembali</button>
+    <h2>✏️ Edit File</h2>
+    <p id="editorFilename" style="color:#aaa;font-size:12px;margin-bottom:10px"></p>
+    <textarea id="editorContent" style="width:100%;height:400px;background:#000;color:#0f0;border:1px solid #9b30ff;border-radius:8px;padding:10px;font-size:12px;font-family:monospace"></textarea>
+    <button onclick="saveFile()" style="width:100%;padding:13px;background:linear-gradient(135deg,#6a0dad,#9b30ff);color:white;border:none;border-radius:12px;font-size:16px;cursor:pointer;margin-top:10px">💾 Simpan</button>
+    </div>
+</div>
+
 </div>
 
 </div>
@@ -213,7 +256,7 @@ function showMainPage() {
 }
 
 function showPage(pageId) {
-    ['homePage','dashboardPage','profilPage','settingPage','infoPage','apkPage','panduanPage'].forEach(p => document.getElementById(p).style.display = 'none');
+    ['homePage','dashboardPage','profilPage','settingPage','infoPage','apkPage','panduanPage', 'panelPage', 'editorPage'].forEach(p => document.getElementById(p).style.display = 'none');
     document.getElementById(pageId).style.display = 'block';
 }
 
@@ -234,6 +277,63 @@ function generateAPK() {
     document.getElementById('apkResult').style.display = 'block';
 }
 
+
+async function botAction(action) {
+    try {
+        const res = await fetch(SERVER + '/panel/' + action, {method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+currentUser.username}});
+        const data = await res.json();
+        alert(data.message);
+        loadLog();
+    } catch(e) { alert('Gagal!'); }
+}
+
+async function loadLog() {
+    try {
+        const res = await fetch(SERVER + '/panel/log');
+        const data = await res.json();
+        const el = document.getElementById('consoleLog');
+        el.innerText = data.log;
+        el.scrollTop = el.scrollHeight;
+    } catch(e) {}
+}
+
+async function loadFiles() {
+    try {
+        const res = await fetch(SERVER + '/panel/files');
+        const data = await res.json();
+        const el = document.getElementById('fileList');
+        el.innerHTML = data.files.map(f => 
+            `<div onclick="editFile('${f}')" style="padding:10px;border:1px solid rgba(155,48,255,0.3);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:10px">
+                <span>📄</span><span style="font-size:14px">${f}</span>
+            </div>`
+        ).join('');
+    } catch(e) {}
+}
+
+async function editFile(filename) {
+    try {
+        const res = await fetch(SERVER + '/panel/file?name=' + filename);
+        const data = await res.json();
+        document.getElementById('editorFilename').textContent = filename;
+        document.getElementById('editorContent').value = data.content;
+        document.getElementById('editorPage').style.display = 'block';
+        document.getElementById('panelPage').style.display = 'none';
+    } catch(e) { alert('Gagal buka file!'); }
+}
+
+async function saveFile() {
+    const filename = document.getElementById('editorFilename').textContent;
+    const content = document.getElementById('editorContent').value;
+    try {
+        const res = await fetch(SERVER + '/panel/file', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({name:filename, content:content})
+        });
+        const data = await res.json();
+        alert(data.message);
+    } catch(e) { alert('Gagal simpan!'); }
+}
 </script>
 </body>
 </html>

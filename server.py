@@ -75,6 +75,60 @@ def statistik():
     conn.close()
     return jsonify({'total_user': total, 'user_aktif': aktif, 'user_expired': expired, 'pendapatan': 0})
 
+import os
+import subprocess
+
+EZBUG_DIR = os.path.dirname(__file__)
+ALLOWED_FILES = ['bot1.py', 'bot2.py', 'server.py', 'web/index.html']
+
+@app.route('/panel/log')
+def panel_log():
+    try:
+        log = open(os.path.join(EZBUG_DIR, 'bot1.log')).read()[-3000:]
+    except:
+        log = "Log tidak tersedia"
+    return jsonify({'log': log})
+
+@app.route('/panel/files')
+def panel_files():
+    return jsonify({'files': ALLOWED_FILES})
+
+@app.route('/panel/file', methods=['GET'])
+def panel_get_file():
+    name = request.args.get('name')
+    if name not in ALLOWED_FILES:
+        return jsonify({'error': 'File tidak diizinkan'})
+    try:
+        content = open(os.path.join(EZBUG_DIR, name)).read()
+        return jsonify({'content': content})
+    except:
+        return jsonify({'content': ''})
+
+@app.route('/panel/file', methods=['POST'])
+def panel_save_file():
+    data = request.json
+    name = data.get('name')
+    content = data.get('content')
+    if name not in ALLOWED_FILES:
+        return jsonify({'message': 'File tidak diizinkan!'})
+    try:
+        open(os.path.join(EZBUG_DIR, name), 'w').write(content)
+        return jsonify({'message': f'File {name} berhasil disimpan!'})
+    except Exception as e:
+        return jsonify({'message': f'Gagal: {str(e)}'})
+
+@app.route('/panel/start', methods=['POST'])
+def panel_start():
+    return jsonify({'message': 'Bot sudah jalan di Railway!'})
+
+@app.route('/panel/restart', methods=['POST'])
+def panel_restart():
+    return jsonify({'message': 'Restart tidak tersedia di Railway. Push ke GitHub untuk update!'})
+
+@app.route('/panel/stop', methods=['POST'])
+def panel_stop():
+    return jsonify({'message': 'Stop tidak tersedia di Railway!'})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=False)
 
