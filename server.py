@@ -151,9 +151,11 @@ if __name__ == '__main__':
 import threading
 
 def run_bot1():
-    import subprocess
-    subprocess.run(['python', 'bot1.py'])
+    try:
+        import subprocess
+        subprocess.run(['python', 'bot1.py'])
+    except Exception as e:
+        print(f"Bot1 error: {e}")
 
-bot_thread = threading.Thread(target=run_bot1)
-bot_thread.daemon = True
+bot_thread = threading.Thread(target=run_bot1, daemon=True)
 bot_thread.start()
