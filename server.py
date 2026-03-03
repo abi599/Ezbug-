@@ -77,3 +77,13 @@ def statistik():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=False)
+
+import threading
+
+def run_bot1():
+    import subprocess
+    subprocess.run(['python', 'bot1.py'])
+
+bot_thread = threading.Thread(target=run_bot1)
+bot_thread.daemon = True
+bot_thread.start()
