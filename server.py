@@ -1,6 +1,7 @@
 import sqlite3
 import hashlib
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+import os
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -12,6 +13,10 @@ def get_db():
 
 def hash_password(p):
     return hashlib.sha256(p.encode()).hexdigest()
+
+@app.route('/')
+def index():
+    return send_from_directory('web', 'index.html')
 
 @app.route('/login', methods=['POST'])
 def login():
