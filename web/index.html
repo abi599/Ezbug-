@@ -234,7 +234,7 @@ async function login() {
     if (!username || !password) { pesan.textContent = 'Username dan password harus diisi!'; return; }
     pesan.textContent = 'Sedang login...';
     try {
-        const res = await fetch(SERVER + '/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password}),signal:AbortSignal.timeout(5000)});
+        const res = await fetch(SERVER + '/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password,device_id:navigator.userAgent+screen.width+screen.height}),signal:AbortSignal.timeout(5000)});
         const data = await res.json();
         if (data.status === 'success') { currentUser = {username:data.username,role:data.role}; showMainPage(); }
         else { pesan.textContent = '❌ ' + data.message; }

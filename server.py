@@ -35,6 +35,11 @@ def init_db():
             ('owner', '43a0d17178a9d26c9e0fe9a74b0b45e38d32f27aed887a008a54bf6e033bf7b9', 'owner'))
     except:
         pass
+        cursor.execute('''CREATE TABLE IF NOT EXISTS sessions (
+        username TEXT PRIMARY KEY,
+        device_id TEXT,
+        last_login TEXT
+    )''')
     conn.commit()
     conn.close()
 
@@ -59,6 +64,17 @@ def login():
     user = cursor.fetchone()
     conn.close()
     if user:
+        device_id = data.get('device_id', 'unknown')
+        conn2 = get_db()
+        cursor2 = conn2.cursor()
+        cursor2.execute("SELECT device_id FROM sessions WHERE username=?", (user[0],))
+        existing = cursor2.fetchone()
+        if existing and existing[0] != device_id:
+            conn2.close()
+            return jsonify({'status': 'error', 'message': 'Akun ini sudah dipakai di perangkat lain!'})
+        cursor2.execute("INSERT OR REPLACE INTO sessions VALUES (?, ?, datetime('now'))", (user[0], device_id))
+        conn2.commit()
+        conn2.close()
         return jsonify({'status': 'success', 'username': user[0], 'role': user[1]})
     return jsonify({'status': 'error', 'message': 'Username atau password salah!'})
 
